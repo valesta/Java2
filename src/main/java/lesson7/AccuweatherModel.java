@@ -1,6 +1,8 @@
 package lesson7;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lesson7.entity.Weather;
+import lesson7.entity.Weather5Days;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -50,10 +52,13 @@ public class AccuweatherModel implements WeatherModel
             String responseBody = response.body().string();
             String date = objectMapper.readTree(responseBody).get(0).at("/LocalObservationDateTime").asText();
             String text = objectMapper.readTree(responseBody).get(0).at("/WeatherText").asText();
-            String temperature = objectMapper.readTree(responseBody).get(0).at("/Temperature/Metric/Value").asText();
+            int temperature = objectMapper.readTree(responseBody).get(0).at("/Temperature/Metric/Value").asInt();
             System.out.println("В городе " + selectedCity + " " + date.split("T")[0] + " " + text +
                     " и температура воздуха " + temperature + " C");
 
+            Weather weather = new Weather(selectedCity, date.split("T")[0], text, temperature);
+            DataBaseRepository dataBaseRepository = new DataBaseRepository();
+            dataBaseRepository.saveWeather(weather);
         }
 
         // TODO*: реализовать вывод прогноза погоды на 5 дней
@@ -95,7 +100,24 @@ public class AccuweatherModel implements WeatherModel
 
                 System.out.println(arrayDate[i].split("T")[0] + " температура " + arrayMinTemperature[i] + "-" +
                         arrayMaxTemperature[i] + " F, " + "днём " + arrayTextDay[i] + ", ночью " + arrayTextNight[i]);
+
+                Weather5Days weather = new Weather5Days(selectedCity, arrayDate[i].split("T")[0], arrayTextDay[i],
+                        arrayTextNight[i], arrayMinTemperature[i], arrayMaxTemperature[i]);
+                DataBaseRepository dataBaseRepository = new DataBaseRepository();
+                dataBaseRepository.saveWeather5Days(weather);
             }
+        }
+
+        if (period == Period.DATA_BASE)
+        {
+            DataBaseRepository dataBaseRepository = new DataBaseRepository();
+            dataBaseRepository.getSavedWeather();
+        }
+
+        if (period == Period.DATA_BASE_DAYS)
+        {
+            DataBaseRepository dataBaseRepository = new DataBaseRepository();
+            dataBaseRepository.getSavedWeatherDays();
         }
     }
 
